@@ -11,7 +11,10 @@ def delay_print(s):
         sys.stdout.flush()
         time.sleep(0.05)
 
-
+blacksmith_store = {'Bronze Sword': [380, 10],
+                    'Bronze Shield': [400, 10],
+                    'Health Potion': 100,
+                    'Silver Apple': 500}
 price = {'Book': 100,
          'Map': 1000,
          'Sword': 350,
@@ -32,23 +35,33 @@ char_inventory = {'MONEY': 1000, 'HOLDER': []}
 
 
 class Character:
-    def __init__(self, name, types, decisions, ITEMS, health='===================='):
+    def __init__(self, name, types, decisions, ITEMS, xp, health='===================='):
         self.name = name
         self.types = types
         self.decisions = decisions
         self.money = ITEMS['MONEY']
         self.items = ITEMS['HOLDER']
-        self.xp = 0
+        self.xp = xp
         self.health = health
         self.bars = 20
 
 
     def run(self):
-        event_randomizer = random.randint(1, 100)
-        if event_randomizer <= 50:
-            char.action()
+        menu = str(input('\nWould you like to view Inventory?: '))
+        if menu == 'Yes':
+            print(char.money)
+            print(char.items)
+            travel = str(input('\nWould you like to travel to the nearest town?: '))
+            if travel == 'Yes':
+                char.town(travel)
+            else:
+                char.run()
         else:
-            char.introduce(Trader)
+            event_randomizer = random.randint(1, 100)
+            if event_randomizer <= 50:
+                char.action()
+            else:
+                char.introduce(Trader)
 
     def action(self):
         print(actions)
@@ -80,6 +93,38 @@ class Character:
             else:
                 char.run()
 
+
+    def town(self, travel):
+        print('\n1:Blacksmith \n2:Go Fishing \n3:Visit Warrior Den \n4:Talk with a Townie')
+        travel_t = str(input('\nWhere would you like to visit in the town?: '))
+        if travel_t == 'Blacksmith':
+            delay_print('\nHello there... What brings you to my store?')
+            print(blacksmith_store)
+            bs_store_cart = str(input('\nWhat would you like to buy {}, {}?: '.format(char.types, char.name)))
+            if bs_store_cart == 'Bronze Sword' or bs_store_cart == 'Bronze Shield':
+                item_price = blacksmith_store[bs_store_cart][0]
+                print('The price of the item will be {}'.format(blacksmith_store[bs_store_cart][0]))
+                decision = str(input('Do you want to buy the item?: '))
+                if decision == 'Yes':
+                    char.money -= item_price
+                    char.items.append(bs_store_cart)
+                    delay_print('Item is added to your inventory')
+                    exit_store = str(input('\nWould like to leave the store?: '))
+                    if exit_store == 'Yes':
+                        char.town(travel)
+                    else:
+                        char.town(travel_t)
+                else:
+                    delay_print('bye now...')
+                    char.town(travel)
+            else:
+                char.town(travel)
+        else:
+            exit_town = str(input('\nWould like to leave the town?: '))
+            if exit_town == 'Yes':
+                char.run()
+            else:
+                char.town(travel)
 
     def trade(self, answer):
         print('These are the items you currently have: {}'.format(char.items))
@@ -149,7 +194,7 @@ class Character:
                 char.talk(answer)
             if answer == 'Fight':
                 if char.xp < Trader.xp:
-                    delay_print('Your XP is too low to fight!')
+                    print('Oh... {} your XP is too low to fight!'.format(char.name))
                     char.introduce(Trader)
                 else:
                     # Create fight function later
@@ -166,7 +211,14 @@ while __name__ == '__main__':
     char_decision = char_decisions
     char_invent = char_inventory
     char_xp = 0
-    char = Character(char_username, char_type, char_decision, char_invent, char_xp)
+    char = Character(char_username, char_type, char_decision, char_invent, char_xp, 0)
     Trader = Character('Trader', 'Trader', ['Trade', 'Talk', 'Fight'],
                        {'MONEY': 1000, "HOLDER": ['Book', 'Map', 'Sword', 'Shield']}, 100)
+    delay_print('Welcome to the Josuku Region!')
+    print('\nYou will embark on a journey to become a Great {}'.format(char_type))
+    print('\nBut first here are some tips and rules for you {}!'.format(char_username))
+    print('\n1: Game flow is designed around random events')
+    print('\n2: Your selections will determine your outcome of those events')
+    print('\n3: Keep track of your money and items throughout your journey')
+    print('\nGood luck... {}, {}'.format(char_type, char_username))
     char.run()
