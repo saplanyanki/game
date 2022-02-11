@@ -1,6 +1,5 @@
 import sys
 import time
-from environment import *
 import random
 
 
@@ -11,10 +10,12 @@ def delay_print(s):
         sys.stdout.flush()
         time.sleep(0.05)
 
-blacksmith_store = {'Bronze Sword': [380, 10],
-                    'Bronze Shield': [400, 10],
+
+blacksmith_store = {'Bronze Sword': 380,
+                    'Bronze Shield': 400,
                     'Health Potion': 100,
                     'Silver Apple': 500}
+
 price = {'Book': 100,
          'Map': 1000,
          'Sword': 350,
@@ -24,14 +25,11 @@ talky = {1: 'Who are you?',
          2: 'What am I supposed to do?',
          3: 'Exit'}
 
-
 actions = ['Dig', 'Wave', 'Eat Food']
-
 
 char_decisions = ['Trade', 'Talk', 'Fight']
 available_types = ['Wizard', 'Warrior', 'Explorer']
-char_inventory = {'MONEY': 1000, 'HOLDER': []}
-
+char_inventory = {'MONEY': 1000, 'HOLDER': [], 'FOOD': ['Apple']}
 
 
 class Character:
@@ -41,10 +39,10 @@ class Character:
         self.decisions = decisions
         self.money = ITEMS['MONEY']
         self.items = ITEMS['HOLDER']
+        self.food = ITEMS['FOOD']
         self.xp = xp
         self.health = health
         self.bars = 20
-
 
     def run(self):
         menu = str(input('\nWould you like to view Inventory?: '))
@@ -68,8 +66,29 @@ class Character:
         action = str(input('\nYou encountered a random tile! Select an option: '))
         if action == 'Dig' or action == 'Wave':
             char.ground_coins(action)
+
+        if action == 'Eat Food':
+            if bool(char.food) == False:
+                delay_print('You have no food!')
+                char.action()
+            else:
+                delay_print('\nYou have some food in your inventory!')
+                print(char.food)
+                food_choice = str(input('\nSelect a food to eat?: '))
+                if food_choice in char.food:
+                    char.food.remove(food_choice)
+                    delay_print('You health has replenished!')
+                    char.bars += 5
+                    char.health = ""
+                    for j in range(int(char.bars)):
+                        char.health += "="
+                    print(char.health)
+                    char.run()
+                else:
+                    delay_print('You do not have that food available')
+                    char.action()
         else:
-            char.action()
+            char.run()
 
     def ground_coins(self, action):
         if action == 'Dig':
@@ -93,17 +112,108 @@ class Character:
             else:
                 char.run()
 
+    def fight(self, fighter2):
+        print('==== {}, YOU CHOOSE TO FIGHT WITH THE {} ===='.format(char.name, fighter2.name))
+        print(f"\n{self.name}")
+        print("YOUR TYPE", self.types)
+        delay_print("=====FIGHTER CREDENTIALS=====")
+        delay_print(f"\n{fighter2.name}")
+        print("\nSTRANGER TYPE", fighter2.types)
+        time.sleep(2)
+
+        while char.bars > 0 and fighter2.bars > 0:
+            fight_menu = ['ATTACK', 'DEFEND']
+            print(fight_menu)
+            user_fight_choice = str(input('Choose a Style: '))
+            if user_fight_choice == 'ATTACK':
+                user_fight_item = str(input('Choose a weapon: '))
+                if user_fight_item in char.items:
+                    print('\nYou chose {} to fight with!'.format(user_fight_item))
+                    delay_print('You made damage')
+                    fighter2.bars -= 5
+                    fighter2.health = ""
+                    for j in range(int(fighter2.bars)):
+                        fighter2.health += "="
+                    print('\nRemaining Opponent Health: {}'.format(fighter2.health))
+                    print('\nYour Health: {}'.format(char.health))
+                    if char.bars <= 0:
+                        delay_print("\n..." + char.name + ' fainted.')
+                        break
+                    if fighter2.bars <= 0:
+                        delay_print("\n..." + fighter2.name + ' fainted.')
+                        break
+                    delay_print('Opponent Attacked You!')
+                    char.bars -= 3
+                    char.health = ""
+                    for j in range(int(char.bars)):
+                        char.health += "="
+                    print('\nRemaining Opponent Health: {}'.format(fighter2.health))
+                    print('\nYour Health: {}'.format(char.health))
+                    if char.bars <= 0:
+                        delay_print("\n..." + char.name + ' fainted.')
+                        break
+                    if fighter2.bars <= 0:
+                        delay_print("\n..." + fighter2.name + ' fainted.')
+                        break
+                else:
+                    delay_print('You stumbled...')
+                    break
+
+            if user_fight_choice == 'DEFEND':
+                user_fight_item = str(input('Choose a weapon to defend: '))
+                if user_fight_item in char.items:
+                    print('\nYou chose {} to defend with!'.format(user_fight_item))
+                    delay_print('Opponent attacked you!')
+                    delay_print('You blocked attack')
+                    print('\nRemaining Opponent Health: {}'.format(fighter2.health))
+                    print('\nYour Health: {}'.format(char.health))
+                    if char.bars <= 0:
+                        delay_print("\n..." + char.name + ' fainted.')
+                        break
+                    if fighter2.bars <= 0:
+                        delay_print("\n..." + fighter2.name + ' fainted.')
+                        break
+                    break
+                else:
+                    delay_print('You stumbled...')
+                    delay_print('Opponent Attacked You!')
+                    char.bars -= 3
+                    char.health = ""
+                    for j in range(int(char.bars)):
+                        char.health += "="
+                    print('\nRemaining Opponent Health: {}'.format(fighter2.health))
+                    print('\nYour Health: {}'.format(char.health))
+                    if char.bars <= 0:
+                        delay_print("\n..." + char.name + ' fainted.')
+                        break
+                    if fighter2.bars <= 0:
+                        delay_print("\n..." + fighter2.name + ' fainted.')
+                        break
+                break
+
+        if char.bars > 0 and fighter2.bars <= 0:
+            delay_print('Congratulations you won the fight!')
+            xp_fight = 2
+            print('{} XP Gained'.format(xp_fight))
+            char.xp += xp_fight
+            delay_print('Getting dark... better leave the town!')
+            char.run()
+
+        if char.bars <= 0 and fighter2.bars > 0:
+            delay_print('...You lost the fight!')
+            delay_print('Getting dark... better leave the town!')
+            char.run()
 
     def town(self, travel):
-        print('\n1:Blacksmith \n2:Go Fishing \n3:Visit Warrior Den \n4:Talk with a Townie')
+        print('\n1:Blacksmith \n2:Go Fishing \n3:Warrior Den \n4:Talk with a Drunk Townie')
         travel_t = str(input('\nWhere would you like to visit in the town?: '))
         if travel_t == 'Blacksmith':
             delay_print('\nHello there... What brings you to my store?')
             print(blacksmith_store)
             bs_store_cart = str(input('\nWhat would you like to buy {}, {}?: '.format(char.types, char.name)))
             if bs_store_cart == 'Bronze Sword' or bs_store_cart == 'Bronze Shield':
-                item_price = blacksmith_store[bs_store_cart][0]
-                print('The price of the item will be {}'.format(blacksmith_store[bs_store_cart][0]))
+                item_price = blacksmith_store[bs_store_cart]
+                print('The price of the item will be {}'.format(blacksmith_store[bs_store_cart]))
                 decision = str(input('Do you want to buy the item?: '))
                 if decision == 'Yes':
                     char.money -= item_price
@@ -117,7 +227,97 @@ class Character:
                 else:
                     delay_print('bye now...')
                     char.town(travel)
+
+            if bs_store_cart == 'Health Potion' or bs_store_cart == 'Silver Apple':
+                item_price = blacksmith_store[bs_store_cart]
+                print('The price of the item will be {}'.format(blacksmith_store[bs_store_cart]))
+                decision = str(input('Do you want to buy the item?: '))
+                if decision == 'Yes':
+                    char.money -= item_price
+                    char.food.append(bs_store_cart)
+                    delay_print('Item is added to your inventory')
+                    exit_store = str(input('\nWould like to leave the store?: '))
+                    if exit_store == 'Yes':
+                        char.town(travel)
+                    else:
+                        char.town(travel_t)
+                else:
+                    delay_print('bye now...')
+                    char.town(travel)
+
+        if travel_t == 'Go Fishing':
+            fishes = ['Tuna', 'Salmon', 'Cod', 'Crab', 'Golden Yellow-tail']
+            print('\nYou went to fish!')
+            print('\nYou have to pick a spot to fish!')
+            print('\n1:Grey Fog\n2:Random Sand Pile\n3:Golden Beak')
+            fish_area = str(input('Pick a Fishing Spot!: '))
+            if fish_area == 'Grey Fog':
+                delay_print('Fishing at Grey Frog...')
+                fish_rand_gf = random.randint(0, 10)
+                if fish_rand_gf >= 6:
+                    print('You caught a Tuna Fish!')
+                    char.food.append(fishes[0])
+                    char.town(travel)
+                if fish_rand_gf <= 5:
+                    print('You caught a Cod Fish!')
+                    char.food.append(fishes[2])
+                    char.town(travel)
+            if fish_area == 'Random Sand Pile':
+                delay_print('Fishing at Random Sand Pile...')
+                delay_print('It is warm and cozy here...')
+                fish_rand_gf = random.randint(0, 10)
+                if fish_rand_gf >= 7:
+                    print('You caught a Tuna Fish!')
+                    char.food.append(fishes[0])
+                    char.town(travel)
+                else:
+                    print('You caught a Cod Fish!')
+                    char.food.append(fishes[2])
+                    char.town(travel)
+            if fish_area == 'Golden Beak':
+                delay_print('Fishing at Golden Beak...')
+                delay_print('You stopped and looked around')
+                delay_print('... Such a beautiful view')
+                fish_rand_gf = random.randint(0, 10)
+                if fish_rand_gf >= 9:
+                    print('You caught a Golden Yellow-Tail!')
+                    print('It is the rarest fish in town!')
+                    char.food.append(fishes[4])
+                    char.town(travel)
+                if 5 <= fish_rand_gf <= 8:
+                    print('You caught a Salmon Fish!')
+                    char.food.append(fishes[1])
+                    char.town(travel)
+                if fish_rand_gf <= 4:
+                    print('You caught a Crab')
+                    delay_print('It bit your hand!')
+                    delay_print('You health has diminished!')
+                    char.bars -= 5
+                    char.health = ""
+                    for j in range(int(char.bars)):
+                        char.health += "="
+                    print(char.health)
+                    char.town(travel)
+
             else:
+                print('Hmm... Not sure what you meant')
+                char.town(travel)
+
+        if travel_t == 'Warrior Den':
+            delay_print('You chose to go to Warrior Den!')
+            delay_print('You see warriors talking...')
+            print('Hello {} {} we were notified that you were in town!'.format(char.types, char.name))
+            if char.xp < 25:
+                print('Your XP level is too low to go inside')
+                print('\nCurrent XP level: {}'.format(char.xp))
+                print('\nHowever, you can practise and gain XP in the yards!')
+                warrior_den_yards = str(input('Would you like to practice in the yards?: '))
+                if warrior_den_yards == 'Yes':
+                    char.fight(Practise_Warrior)
+                else:
+                    char.town(travel)
+            else:
+                print('I will take you inside!')
                 char.town(travel)
         else:
             exit_town = str(input('\nWould like to leave the town?: '))
@@ -211,9 +411,14 @@ while __name__ == '__main__':
     char_decision = char_decisions
     char_invent = char_inventory
     char_xp = 0
-    char = Character(char_username, char_type, char_decision, char_invent, char_xp, 0)
+    char = Character(char_username, char_type, char_decision, char_invent, char_xp)
+
     Trader = Character('Trader', 'Trader', ['Trade', 'Talk', 'Fight'],
-                       {'MONEY': 1000, "HOLDER": ['Book', 'Map', 'Sword', 'Shield']}, 100)
+                       {'MONEY': 1000, "HOLDER": ['Book', 'Map', 'Sword', 'Shield'], 'FOOD': []}, 100)
+
+    Practise_Warrior = Character('Novice Warrior', 'Warrior', ['Fight', 'Fight', 'Fight'],
+                                 {'MONEY': 1000, "HOLDER": ['Bronze Sword', 'Bronze Shield'], 'FOOD': []}, 10)
+
     delay_print('Welcome to the Josuku Region!')
     print('\nYou will embark on a journey to become a Great {}'.format(char_type))
     print('\nBut first here are some tips and rules for you {}!'.format(char_username))
